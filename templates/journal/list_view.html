@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+	All Journal
+{% endblock %}
+
+{% block content %}
+    <h1>All Journal</h1>
+    <select name="cat" id="cat" class="m-3" onchange="location.replace('?category='+this.value)">
+    {% for category in Categories %}
+        <option value="{{ category.pk }}">{{ category.category_name }}</option>
+    {% endfor %}
+    </select>
+    <div class="card-container row mb-3">
+        {% for object in object_list %}
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <img class="card-image-top w-100" src="{% static object.journal_image %}" alt="">
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'show_journal' object.pk %}">{{ object.journal_title }}</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    <script>
+        const urlParams = new URLSearchParams(window.location.search)
+        const selectVal = urlParams.get('category')
+        let muSelect = document.getElementById('cat')
+        muSelect.value = selectVal;
+    </script>
+    </div>
+{% endblock %}

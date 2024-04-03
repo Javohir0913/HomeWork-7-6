@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+	{{ object.journal_title }}
+{% endblock %}
+
+{% block content %}
+    {% if user == object.journal_author %}
+    <p>
+        <a href="{% url 'edit_journal' object.pk %}">Edit</a>&nbsp;&nbsp;
+        <a href="{% url 'delete_journal' object.pk %}">Delete</a>
+    </p>
+    {% endif %}
+	{{ object.journal_contact|safe }}
+{% endblock %}

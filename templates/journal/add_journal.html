@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+	Insert journal
+{% endblock %}
+
+{% block content %}
+    <h1>Insert Journal</h1>
+	<form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.media }}
+    {{ form|crispy }}
+    <input type="submit" value="Insert journal" class="btn btn-success mt-1 mb-3">
+    </form>
+{% endblock %}
