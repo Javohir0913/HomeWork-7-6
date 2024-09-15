@@ -32,11 +32,11 @@ class LoginView(FormView):
             user = authenticate(username=request.POST['username'], password=request.POST['password'])
             if user is not None:
                 login(request, user)
-                return redirect('index')
+                return redirect('group_list')
 
 
 class LogoutView(RedirectView):
-    url = reverse_lazy('login')
+    url = reverse_lazy('group_list')
 
     def get(self, request, *args, **kwargs):
         logout(request)

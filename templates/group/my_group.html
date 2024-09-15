@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}
+	test1
+{% endblock %}
+
+{% block content %}
+	{% for i in group_list %}
+        <a href="{% url 'group_attendance' i.id %}">{{ i }} </a>
+        <br>
+    {% endfor %}
+{% endblock %}

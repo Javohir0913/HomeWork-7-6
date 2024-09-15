@@ -46,8 +46,7 @@ INSTALLED_APPS = [
     'ckeditor',
     # my apps
     'users',
-    'app_journal',
-    'app_search'
+    'groups'
 ]
 
 MIDDLEWARE = [
@@ -86,7 +85,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'tafu.sqlite3',
     }
 }
 
@@ -141,20 +140,5 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ******************** ckeditor settings BEGIN ************************
-
-CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
-CKEDITOR_UPLOAD_PATH = "media/uploads/"
-
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'full',
-        'height': '100%',
-        'width': '100%',
-    },
-}
-
-# ******************** ckeditor settings END **************************
 
 CRISPY_TEMPLATE_PACK = 'bootstrap5'

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class AppJournalConfig(AppConfig):
+class GroupsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'app_journal'
+    name = 'groups'
