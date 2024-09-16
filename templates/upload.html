@@ -1,0 +1,15 @@
+
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}
+	Login
+{% endblock %}
+
+{% block content %}
+	<h1>Yuklash</h1>
+	<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="excel_file" required>
+    <button type="submit">Yuklash</button>
+</form>
+{% endblock %}

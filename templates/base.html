@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<style>
+  #button_1 {
+    font-size: 2.50rem; /* Kattalashishni sozlash */
+    padding: 0.75rem 1.25rem; /* Tugmaning o'lchamini sozlash */
+  }
+</style>
     {% block head %}
 
     {% endblock %}
@@ -28,8 +34,10 @@
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Dropdown</a>
           <ul class="dropdown-menu">
               <li><a class="nav-link" href="{% url 'group_list' %}">group_list</a></li>
-{#              <hr>#}
-{#            <li><a class="nav-link" href="#">All Journal</a></li>#}
+              {% if user.is_staff %}
+              <hr>
+            <li><a class="nav-link" href="{% url "export_attendance_to_excel" %}">Excel</a></li>
+              {% endif %}
 {#            <li><a class="dropdown-item" href="#">A third link</a></li>#}
           </ul>
         </li>
@@ -38,16 +46,16 @@
            
             &nbsp;&nbsp;&nbsp;&nbsp;
             <div class="dropdown">
-              <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown">
+              <button id="button_1"  type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown">
                 {{ user.username }}
               </button>
 
               <ul class="dropdown-menu">
-                <li class="btn btn-danger"><a class="dropdown-item" href="{% url 'logout' %}">logout</a></li>
+                <li id="button_1" class="btn btn-danger"><a class="dropdown-item" href="{% url 'logout' %}">logout</a></li>
               </ul>
             </div>
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-info m-2" type="submit">Login</a>
+            <a href="{% url 'login' %}" class="btn btn-info m-2" type="submit" id="button_1" >Login</a>
 {#            <a href="{% url 'register' %}" class="btn btn-info" type="submit">Register</a>#}
         {% endif %} 
     </div>

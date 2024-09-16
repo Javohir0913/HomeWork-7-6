@@ -1,7 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView
+import pandas as pd
+from django.http import HttpResponse
+from datetime import date
 
 from .models import Student, Attendance, Group
 
@@ -11,10 +14,19 @@ class GroupList(LoginRequiredMixin, ListView):
     model = Group
     template_name = 'group/my_group.html'
 
-    def get_queryset(self):
-        # Faqat foydalanuvchi tomonidan yaratilgan guruhlarni filtrlang
-        groups_data_my = Group.objects.filter(group_author=self.request.user.id)
-        return groups_data_my
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_staff:
+            groups = Group.objects.all()
+        else:
+            groups = Group.objects.filter(group_author=self.request.user.id)
+
+        # Create a dictionary to store student counts
+        all_info = []
+        for group in groups:
+            all_info.append({'group': group, 'count_people': Student.objects.filter(stundet_group=group).count()})
+        context['all_info'] = all_info
+        return context
 
 
 class GroupAttendanceView(LoginRequiredMixin, View):
@@ -24,10 +36,39 @@ class GroupAttendanceView(LoginRequiredMixin, View):
         group_id = kwargs.get('pk')
         group = Group.objects.get(id=group_id)
         students = Student.objects.filter(stundet_group=group_id)
-        context = {
-            'students': students,
-            'group': group  # Group ob'ektini shablonga yuboryapmiz
-        }
+        zxc = Attendance.objects.filter(group_id=group).first()
+        if zxc is None:
+            context = {
+                'students': students,
+                'group': group,  # Group ob'ektini shablonga yuboryapmiz
+                'para1': 'True',
+                'para2': 'False',
+                'para3': 'False'
+            }
+        elif len(zxc.para2) == 0:
+            context = {
+                'students': students,
+                'group': group,  # Group ob'ektini shablonga yuboryapmiz
+                'para1': 'False',
+                'para2': 'True',
+                'para3': 'False'
+            }
+        elif len(zxc.para3) == 0:
+            context = {
+                'students': students,
+                'group': group,  # Group ob'ektini shablonga yuboryapmiz
+                'para1': 'False',
+                'para2': 'False',
+                'para3': 'True'
+            }
+        else:
+            context = {
+                'students': students,
+                'group': group,  # Group ob'ektini shablonga yuboryapmiz
+                'para1': 'False',
+                'para2': 'False',
+                'para3': 'False'
+            }
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -37,12 +78,78 @@ class GroupAttendanceView(LoginRequiredMixin, View):
 
         # Form ma'lumotlarini bu yerda qayta ishlash
         for student in students:
-            para1 = request.POST.get(f'para1_{student.id}', False)
-            para2 = request.POST.get(f'para2_{student.id}', False)
-            para3 = request.POST.get(f'para3_{student.id}', False)
+            para1 = request.POST.get(f'para1_{student.id}')
+            para2 = request.POST.get(f'para2_{student.id}')
+            para3 = request.POST.get(f'para3_{student.id}')
 
-            # Checkbox holatiga qarab ma'lumotlarni saqlash yoki boshqa amallarni bajarish
-            Attendance.objects.create(student=Student.objects.get(id=student.id), para1=para1,
-                                      para2=para2, para3=para3, group_id=group)
+            # Eski ma'lumotlarni olish (agar mavjud bo'lsa)
+            attendance, created = Attendance.objects.get_or_create(
+                student=student, group_id=group
+            )
+
+            # Eski qiymatlarni saqlab, faqat kelgan yangilarini yangilash
+            if para1:
+                attendance.para1 = para1
+            if para2:
+                attendance.para2 = para2
+            if para3:
+                attendance.para3 = para3
+
+            # O'zgarishlarni saqlash
+            attendance.save()
+
         # Form ma'lumotlarini qayta ishlagandan keyin sahifani qayta yuklash yoki boshqa sahifaga o'tish
         return redirect('group_list')  # To'g'ri URL manzilini qo'yishingiz kerak
+
+
+def export_attendance_to_excel(request):
+    # Bugungi sanani olish
+    today = date.today()
+
+    # Bugungi sanaga mos ma'lumotlarni olish
+    queryset = Attendance.objects.filter(data_day=today)
+    data = list(queryset.values('student__student_name', 'para1', 'para2', 'para3', 'data_day', 'group_id__group_name'))
+
+    # Pandas DataFrame yaratish
+    df = pd.DataFrame(data)
+
+    # Excel fayl yaratish
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="attendance.xlsx"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Attendance')
+
+    return response
+
+
+def load_students_from_excel(file_path):
+    # Excel faylini o'qish (ustunlarsiz, ya'ni header=None)
+    df = pd.read_excel(file_path, header=None)
+    # Har bir qatorni ma'lumotlar bazasiga saqlash
+    for index, row in df.iterrows():
+        # Guruhni topish yoki yaratish (D ustun - 3-indeks)
+        group, created = Group.objects.get_or_create(group_name=row[3])
+        print(group)
+        # Talabani yaratish yoki saqlash (A, B, C ustunlar - 0, 1, 2 indekslar)
+        student, created = Student.objects.get_or_create(
+            student_last_name=row[0],  # A ustun - Familiya
+            student_name=row[1],       # B ustun - Ism
+            student_father_name=row[2], # C ustun - Otasining ismi
+            stundet_group=group
+        )
+
+        print(f"Yaratildi: {student}")
+
+    return HttpResponse("Ma'lumotlar yuklandi!")
+
+
+def upload_students(request):
+    if request.method == 'POST' and request.FILES['excel_file']:
+        excel_file = request.FILES['excel_file']
+
+        # Faylni vaqtinchalik saqlash va load_students_from_excel funksiyasiga uzatish
+        load_students_from_excel(excel_file)
+
+        return HttpResponse("Ma'lumotlar bazaga yuklandi!")
+    return render(request, 'upload.html')

@@ -1,8 +1,34 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load crispy_forms_tags %}
 {% block head %}
      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     <script src="{% static 'js/form-validation.js' %}" defer></script>
+    <style>
+      /* Umumiy jadval va matnni kattalashtirish */
+      table {
+        font-size: 1.5rem; /* Matn kattaligi */
+      }
+
+      th, td {
+        padding: 1rem; /* Jadval hujayralarining ichki bo'shligi */
+      }
+
+      h1 {
+        font-size: 2rem; /* Sarlavhani kattalashtirish */
+      }
+
+      select {
+        font-size: 1.2rem; /* Dropdown o'lchamini kattalashtirish */
+      }
+
+      /* Kattaroq tugma */
+      .btn-success {
+        font-size: 1.25rem; /* Tugma matnini kattalashtirish */
+        padding: 0.75rem 1.5rem; /* Tugmaning ichki bo'shligi */
+      }
+    </style>
 {% endblock %}
 {% block title %}
 {{ group }}
@@ -10,52 +36,75 @@
 {% block content %}
     <h1>{{ group }}</h1>
     <br>
-   <form method="POST" action="{% url 'group_attendance' pk=group.id %}">
-        {% csrf_token %}
-        <table class="table table-dark table-hover">
-            <thead>
-                <tr>
-                    <th>№</th>
-                    <th>Ism Familiya O'chstiva</th>
-                    <th>1 - Para</th>
-                    <th>2 - Para</th>
-                    <th>3 - Para</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for student in students %}
-                <tr>
-                    <td>{{ student.id }}</td>
-                    <td>{{ student.student_name }} {{ student.student_last_name }} {{ student.student_father_name }}</td>
-                    <td>
-                        <select name="para1_{{ student.id }}">
-                            <option value="neutral" selected>⚪</option>
-                            <option value="True">✅</option>
-                            <option value="False">❌</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select name="para2_{{ student.id }}">
-                            <option value="neutral" selected>⚪</option>
-                            <option value="True">✅</option>
-                            <option value="False">❌</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select name="para3_{{ student.id }}">
-                            <option value="neutral" selected>⚪</option>
-                            <option value="True">✅</option>
-                            <option value="False">❌</option>
-                        </select>
-                    </td>
-{#                    <td><input type="checkbox" name="para1_{{ student.id }}"></td>#}
-{#                    <td><input type="checkbox" name="para2_{{ student.id }}"></td>#}
-{#                    <td><input type="checkbox" name="para3_{{ student.id }}"></td>#}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        <input class="btn btn-success" style="float: right;" type="submit" value="Saqlash">
-    </form>
+   <form id="attendance-form" method="POST" action="{% url 'group_attendance' pk=group.id %}">
+    {% csrf_token %}
+    <table class="table table-dark table-hover">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Ism Familiya O'chstiva</th>
+                <th>1 - Para</th>
+                <th>2 - Para</th>
+                <th>3 - Para</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for student in students %}
+            <tr>
+                <td>{{ student.id }}</td>
+                <td>{{ student.student_last_name }} {{ student.student_name }} {{ student.student_father_name }}</td>
+                <td>
+                    {% if para1 == 'True' %}
+                    <select name="para1_{{ student.id }}" class="para-select">
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% else %}
+                    <select name="para1_{{ student.id }}" class="para-select" disabled>
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if para2 == 'True' %}
+                    <select name="para2_{{ student.id }}" class="para-select">
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% else %}
+                    <select name="para2_{{ student.id }}" class="para-select" disabled>
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if para3 == 'True' %}
+                    <select name="para3_{{ student.id }}" class="para-select">
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% else %}
+                    <select name="para3_{{ student.id }}" class="para-select" disabled>
+                        <option value="" selected>⚪</option>
+                        <option value="True">✅</option>
+                        <option value="False">❌</option>
+                    </select>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <input class="btn btn-success" style="float: right;" type="submit" value="Saqlash">
+</form>
+<div id="error-message" style="color: red;"></div>
+
 {% endblock %}
 
