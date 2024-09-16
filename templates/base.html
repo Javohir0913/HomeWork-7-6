@@ -34,10 +34,10 @@
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Dropdown</a>
           <ul class="dropdown-menu">
               <li><a class="nav-link" href="{% url 'group_list' %}">group_list</a></li>
-              {% if user.is_staff %}
-              <hr>
-            <li><a class="nav-link" href="{% url "export_attendance_to_excel" %}">Excel</a></li>
-              {% endif %}
+{#              {% if user.is_staff %}#}
+{#              <hr>#}
+{#            <li><a class="nav-link" href="{% url "export_attendance_to_excel" %}">Excel</a></li>#}
+{#              {% endif %}#}
 {#            <li><a class="dropdown-item" href="#">A third link</a></li>#}
           </ul>
         </li>

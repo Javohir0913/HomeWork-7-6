@@ -51,7 +51,7 @@
         <tbody>
         {% for student in students %}
             <tr>
-                <td>{{ student.id }}</td>
+                <td>{{ forloop.counter }}</td>
                 <td>{{ student.student_last_name }} {{ student.student_name }} {{ student.student_father_name }}</td>
                 <td>
                     {% if para1 == 'True' %}

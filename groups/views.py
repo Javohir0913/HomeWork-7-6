@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.views import View
@@ -102,20 +103,38 @@ class GroupAttendanceView(LoginRequiredMixin, View):
         return redirect('group_list')  # To'g'ri URL manzilini qo'yishingiz kerak
 
 
-def export_attendance_to_excel(request):
+def export_attendance_to_excel(request, pk):
     # Bugungi sanani olish
     today = date.today()
 
     # Bugungi sanaga mos ma'lumotlarni olish
-    queryset = Attendance.objects.filter(data_day=today)
-    data = list(queryset.values('student__student_name', 'para1', 'para2', 'para3', 'data_day', 'group_id__group_name'))
+    queryset = Attendance.objects.filter(data_day=today, group_id=pk)
 
-    # Pandas DataFrame yaratish
+    # Ma'lumotlarni olish va ism-familiyani birlashtirish
+
+    data = list(
+        queryset.values('student__student_name', 'student__student_last_name', 'para1', 'para2', 'para3', 'data_day',
+                        'group_id__group_name'))
+
+    # Ism va familiyani birlashtirib yangi ro'yxat yaratish
+
+    for item in data:
+        item['full_name'] = item['student__student_last_name'] + ' ' + item['student__student_name']
+        del item['student__student_name']
+        del item['student__student_last_name']
+    if not data:
+        messages.warning(request, "Bugungi sana uchun bu guruhda qatnash ma'lumotlari topilmadi.")
+        return redirect('group_list')  # Foydalanuvchini kerakli sahifaga yo'naltirish
+
+        # Pandas DataFrame yaratish
     df = pd.DataFrame(data)
+
+    # Ustunlarni tartibga solish (agar kerak bo'lsa)
+    df = df[['full_name', 'para1', 'para2', 'para3', 'data_day', 'group_id__group_name']]
 
     # Excel fayl yaratish
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="attendance.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="{Group.objects.get(id=pk)} {date.today()}.xlsx"'
 
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Attendance')
@@ -135,7 +154,7 @@ def load_students_from_excel(file_path):
         student, created = Student.objects.get_or_create(
             student_last_name=row[0],  # A ustun - Familiya
             student_name=row[1],       # B ustun - Ism
-            student_father_name=row[2], # C ustun - Otasining ismi
+            student_father_name=row[2],# C ustun - Otasining ismi
             stundet_group=group
         )
 
