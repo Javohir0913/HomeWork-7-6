@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from datetime import date
+from django.utils import timezone
 
 # Create your models here.
 class Group(models.Model):
@@ -36,7 +36,7 @@ class Attendance(models.Model):
     para1 = models.CharField(max_length=50)
     para2 = models.CharField(max_length=50)
     para3 = models.CharField(max_length=50)
-    data_day = models.DateField(default=date.today)
+    data_day = models.DateTimeField(default=timezone.now)
     group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
 
     def __str__(self):

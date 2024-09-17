@@ -5,7 +5,10 @@ from django.views import View
 from django.views.generic import ListView
 import pandas as pd
 from django.http import HttpResponse
-from datetime import date
+from datetime import timedelta
+from django.utils import timezone
+import pytz
+
 
 from .models import Student, Attendance, Group
 
@@ -34,10 +37,12 @@ class GroupAttendanceView(LoginRequiredMixin, View):
     template_name = 'group/my_group_detail.html'
 
     def get(self, request, *args, **kwargs):
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
         group_id = kwargs.get('pk')
         group = Group.objects.get(id=group_id)
         students = Student.objects.filter(stundet_group=group_id)
-        zxc = Attendance.objects.filter(group_id=group).first()
+        zxc = Attendance.objects.filter(data_day__range=(today_start, today_end), group_id=group).first()
         if zxc is None:
             context = {
                 'students': students,
@@ -104,29 +109,37 @@ class GroupAttendanceView(LoginRequiredMixin, View):
 
 
 def export_attendance_to_excel(request, pk):
-    # Bugungi sanani olish
-    today = date.today()
+    # Bugungi kunning boshlanish va tugash vaqtini olish
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
 
     # Bugungi sanaga mos ma'lumotlarni olish
-    queryset = Attendance.objects.filter(data_day=today, group_id=pk)
+    queryset = Attendance.objects.filter(data_day__range=(today_start, today_end), group_id=pk)
+
+    # Mahalliy vaqt zonasini olish
+    local_tz = pytz.timezone('Asia/Tashkent')
 
     # Ma'lumotlarni olish va ism-familiyani birlashtirish
-
     data = list(
         queryset.values('student__student_name', 'student__student_last_name', 'para1', 'para2', 'para3', 'data_day',
                         'group_id__group_name'))
 
     # Ism va familiyani birlashtirib yangi ro'yxat yaratish
-
     for item in data:
+        # UTC vaqtni mahalliy vaqtga o'zgartirish
+        utc_time = item['data_day'].replace(tzinfo=pytz.utc)
+        local_time = utc_time.astimezone(local_tz)
+        item['data_day'] = local_time.strftime('%Y-%m-%d %H:%M:%S')  # Vaqt formatlash
+
         item['full_name'] = item['student__student_last_name'] + ' ' + item['student__student_name']
         del item['student__student_name']
         del item['student__student_last_name']
+
     if not data:
         messages.warning(request, "Bugungi sana uchun bu guruhda qatnash ma'lumotlari topilmadi.")
         return redirect('group_list')  # Foydalanuvchini kerakli sahifaga yo'naltirish
 
-        # Pandas DataFrame yaratish
+    # Pandas DataFrame yaratish
     df = pd.DataFrame(data)
 
     # Ustunlarni tartibga solish (agar kerak bo'lsa)
@@ -134,7 +147,7 @@ def export_attendance_to_excel(request, pk):
 
     # Excel fayl yaratish
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename="{Group.objects.get(id=pk)} {date.today()}.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="{Group.objects.get(id=pk)} {today_start.date()}.xlsx"'
 
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Attendance')
