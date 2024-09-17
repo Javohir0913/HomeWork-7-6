@@ -24,7 +24,7 @@ class LoginView(FormView):
 
     def get(self, request, *args, **kwargs):
         form = AuthenticationForm()
-        return render(request, 'registration/login.html', context={'form': form})
+        return render(request, self.template_name, context={'form': form})
 
     def post(self, request, *args, **kwargs):
         form = AuthenticationForm(request, data=request.POST)
@@ -33,6 +33,9 @@ class LoginView(FormView):
             if user is not None:
                 login(request, user)
                 return redirect('group_list')
+        # Bu yerda xatoliklarni o'zbek tiliga o'zgartirish
+        form.add_error(None, "Iltimos, to'g'ri foydalanuvchi nomi va parolni kiriting. Foydalanuvchi nomi va parol katta-kichik harflarga sezgir.")
+        return render(request, self.template_name, context={'form': form})
 
 
 class LogoutView(RedirectView):
