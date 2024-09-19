@@ -6,6 +6,30 @@
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
      <script src="{% static 'js/form-validation.js' %}" defer></script>
     <style>
+        /* Kattaroq checkbox */
+    input[type="checkbox"] {
+        width: 25px;
+        height: 25px;
+        cursor: pointer; /* Hover effekti uchun */
+    }
+
+    /* Belgilanganida yashil fon va galchka */
+    input[type="checkbox"]:checked {
+        {#background-color: green;#}
+        {#border: 2px solid darkgreen;#}
+        appearance: none; /* Brauzer ko'rinishidan foydalanmaslik */
+        position: relative;
+    }
+
+    /* Galchka belgisi */
+    input[type="checkbox"]:checked::after {
+        content: "\274C"; /* Unicode galchka belgisi */
+        color: white;
+        font-size: 20px;
+        position: absolute;
+        left: 2px;
+        top: -1px;
+    }
       /* Umumiy jadval va matnni kattalashtirish */
       table {
         font-size: 1.5rem; /* Matn kattaligi */
@@ -52,50 +76,64 @@
         {% for student in students %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ student.student_last_name }} {{ student.student_name }} {{ student.student_father_name }}</td>
+                <td>{{ student.student_last_name }} {{ student.student_name }} {{ student.student_father_name }}
+{#                    <img style="float: right" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzKNoB6NdrKSJ9CRsJrcvfpcgHxxu0hWSnaA&s" alt="error" width="50">#}
+                </td>
                 <td>
                     {% if para1 == 'True' %}
-                    <select name="para1_{{ student.id }}" class="para-select">
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para1_{{ student.id }}" value="+">
+                        <input name="para1_{{ student.id }}" type="checkbox" value="-">
+{#                    <select name="para1_{{ student.id }}" class="para-select">#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% else %}
-                    <select name="para1_{{ student.id }}" class="para-select" disabled>
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para1_{{ student.id }}" value="">
+                        <input name="para1_{{ student.id }}" type="checkbox" value="" disabled>
+{#                    <select name="para1_{{ student.id }}" class="para-select" disabled>#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% endif %}
                 </td>
                 <td>
                     {% if para2 == 'True' %}
-                    <select name="para2_{{ student.id }}" class="para-select">
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para2_{{ student.id }}" value="+">
+                        <input name="para2_{{ student.id }}" type="checkbox" value="-">
+{#                    <select name="para2_{{ student.id }}" class="para-select">#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% else %}
-                    <select name="para2_{{ student.id }}" class="para-select" disabled>
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para2_{{ student.id }}" value="">
+                        <input name="para2_{{ student.id }}" type="checkbox" value="" disabled>
+{#                    <select name="para2_{{ student.id }}" class="para-select" disabled>#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% endif %}
                 </td>
                 <td>
                     {% if para3 == 'True' %}
-                    <select name="para3_{{ student.id }}" class="para-select">
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para3_{{ student.id }}" value="+">
+                        <input name="para3_{{ student.id }}" type="checkbox" value="-">
+{#                    <select name="para3_{{ student.id }}" class="para-select">#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% else %}
-                    <select name="para3_{{ student.id }}" class="para-select" disabled>
-                        <option value="" selected>⚪</option>
-                        <option value="+">✅</option>
-                        <option value="-">❌</option>
-                    </select>
+                        <input type="hidden" name="para3_{{ student.id }}" value="">
+                        <input name="para3_{{ student.id }}" type="checkbox" value="" disabled>
+{#                    <select name="para3_{{ student.id }}" class="para-select" disabled>#}
+{#                        <option value="" selected>⚪</option>#}
+{#                        <option value="+">✅</option>#}
+{#                        <option value="-">❌</option>#}
+{#                    </select>#}
                     {% endif %}
                 </td>
             </tr>
