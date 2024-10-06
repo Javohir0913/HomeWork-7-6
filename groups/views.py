@@ -78,6 +78,8 @@ class GroupAttendanceView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
         group_id = kwargs.get('pk')
         group = Group.objects.get(id=group_id)
         students = Student.objects.filter(stundet_group=group_id)
@@ -87,12 +89,10 @@ class GroupAttendanceView(LoginRequiredMixin, View):
             para1 = request.POST.get(f'para1_{student.id}')
             para2 = request.POST.get(f'para2_{student.id}')
             para3 = request.POST.get(f'para3_{student.id}')
-
             # Eski ma'lumotlarni olish (agar mavjud bo'lsa)
             attendance, created = Attendance.objects.get_or_create(
-                student=student, group_id=group
+                student=student, group_id=group, data_day__range=(today_start, today_end),
             )
-
             # Eski qiymatlarni saqlab, faqat kelgan yangilarini yangilash
             if para1:
                 attendance.para1 = para1
