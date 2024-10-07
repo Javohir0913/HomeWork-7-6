@@ -1,16 +1,20 @@
+import os
+from pathlib import Path
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView
+from django.views.generic import ListView, CreateView
 import pandas as pd
 from django.http import HttpResponse
 from datetime import timedelta
 from django.utils import timezone
 import pytz
+from fpdf import FPDF
 
-
-from .models import Student, Attendance, Group
+from .models import Student, Attendance, Group, Honadon
 
 
 # Create your views here.
@@ -108,6 +112,7 @@ class GroupAttendanceView(LoginRequiredMixin, View):
         return redirect('group_list')  # To'g'ri URL manzilini qo'yishingiz kerak
 
 
+@login_required
 def export_attendance_to_excel(request, pk):
     # Bugungi kunning boshlanish va tugash vaqtini olish
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -176,6 +181,7 @@ def load_students_from_excel(file_path):
     return HttpResponse("Ma'lumotlar yuklandi!")
 
 
+@login_required
 def upload_students(request):
     if request.method == 'POST' and request.FILES['excel_file']:
         excel_file = request.FILES['excel_file']
@@ -185,3 +191,83 @@ def upload_students(request):
 
         return HttpResponse("Ma'lumotlar bazaga yuklandi!")
     return render(request, 'upload.html')
+
+
+class HonadonCreateView(LoginRequiredMixin, CreateView):
+    model = Honadon
+    fields = ['image_1', 'student_name', 'image_2', 'dicription']
+    template_name = 'honodon.html'
+    success_url = reverse_lazy("honadon-list")  # Muvaffaqiyatli saqlanganidan so'ng
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.create_pdf(self.object)  # PDF yaratish
+        return response
+
+    def create_pdf(self, honadon):
+        pdf = FPDF(orientation='P', unit='mm', format=(210, 150))
+        pdf.add_page()
+
+        # Shrift qo'shish
+        pdf.set_font("Arial", size=12)
+
+        # Rasm qo'shish
+        dir_base = Path(__file__).parent.parent
+        image_path = dir_base / "media/photo_2024-10-06_16-45-44.jpg"
+
+        # Rasmning mavjudligini tekshirish
+        if os.path.exists(image_path):
+            pdf.image(str(image_path), x=0, y=0, w=210, h=150)
+        else:
+            return HttpResponse("Rasm topilmadi: photo_2024-10-06_16-45-44.jpg", status=404)
+
+        # Birinchi rasmni qo'shish
+        pdf.image(honadon.image_1.path, x=5, y=5, w=90, h=60)
+
+        # Birinchi matnni rasmning o'ng tomoniga joylashtirish
+        pdf.set_xy(100, 10)
+        pdf.multi_cell(100, 10, txt=honadon.student_name, align='L')
+
+        # Matn va rasm orasida bo'sh joy yaratish
+        pdf.ln(50)
+
+        # Ikkinchi matnni qo'shish
+        pdf.multi_cell(100, 10, txt=honadon.dicription, align='L')
+
+        # Ikkinchi rasmni qo'shish
+        pdf.image(honadon.image_2.path, x=110, y=70, w=90, h=60)
+
+        # PDFni saqlash uchun katalog yo'lini tekshirish
+        pdf_dir = dir_base / "media/honadon_pdf"
+        if not os.path.exists(pdf_dir):
+            os.makedirs(pdf_dir)  # Agar katalog mavjud bo'lmasa, yarating
+
+        # PDFni saqlash
+        pdf_output_path = pdf_dir / f"honadon_{honadon.pk}.pdf"
+        pdf.output(str(pdf_output_path))
+
+        return pdf_output_path  # PDF fayl yo'lini qaytarish
+
+
+class PDFDownloadView(LoginRequiredMixin, View):  # View dan meros olish
+    def get(self, request, pk):
+        dir_pdf = Path(__file__).parent.parent
+        pdf_file_path = dir_pdf / f"media/honadon_pdf/honadon_{pk}.pdf"  # PDF fayl yo'li
+
+        # PDF faylini yuklab olish
+        if os.path.exists(pdf_file_path):
+            with open(pdf_file_path, 'rb') as pdf_file:
+                response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="honadon_{pk}.pdf"'
+                return response
+        else:
+            return HttpResponse("PDF topilmadi", status=404)
+
+
+class PDFList(LoginRequiredMixin, ListView):
+    model = Honadon
+    template_name = 'honadon_list.html'
+    context_object_name = 'honadon_list'
+
+    def get_queryset(self):
+        return Honadon.objects.all().order_by('-id')  # student_name ga ko'ra kamayish tartibi

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Honadon
+{% endblock %}
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}  <!-- Crispy Forms uchun -->
+        <input type="file" name="image_1" accept="image/*" capture="camera">
+        <input type="file" name="image_2" accept="image/*" capture="camera">
+        <button style="float: right" class="btn btn-success" type="submit">Yaratish</button>
+    </form>
+{% endblock %}

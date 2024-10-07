@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Attendance, Group, Student
+from .models import Attendance, Group, Student, Honadon
 # Register your models here.
 
 
@@ -15,3 +15,4 @@ class AttendanceAdmin(admin.ModelAdmin):
 admin.site.register(Attendance, AttendanceAdmin)
 admin.site.register(Group)
 admin.site.register(Student, StudentAdmin)
+admin.site.register(Honadon)

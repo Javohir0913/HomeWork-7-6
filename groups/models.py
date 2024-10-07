@@ -47,3 +47,18 @@ class Attendance(models.Model):
         verbose_name = 'Attendance'
         verbose_name_plural = 'Attendances'
         unique_together = (('student', 'data_day'),)
+
+
+class Honadon(models.Model):
+    image_1 = models.ImageField(upload_to='honadon/%Y/%m/%d')
+    student_name = models.CharField(max_length=255)
+    image_2 = models.ImageField(upload_to='honadon/%Y/%m/%d')
+    dicription = models.TextField()
+
+    def __str__(self):
+        return self.student_name
+
+    class Meta:
+        db_table = 'honadon'
+        verbose_name = 'Honadon'
+        verbose_name_plural = 'Honadons'
