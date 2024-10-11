@@ -2,10 +2,10 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+
 # Create your models here.
 class Group(models.Model):
     group_name = models.CharField(max_length=50)
-    group_author = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
     def __str__(self):
         return self.group_name
@@ -62,3 +62,17 @@ class Honadon(models.Model):
         db_table = 'honadon'
         verbose_name = 'Honadon'
         verbose_name_plural = 'Honadons'
+
+
+class GroupView(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    groups_list = models.ManyToManyField(Group)
+
+    def __str__(self):
+        return str(self.user)
+
+    class Meta:
+        db_table = 'groupview'
+        verbose_name = 'Group View'
+        verbose_name_plural = 'Group Views'
+        unique_together = ('user',)

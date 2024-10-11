@@ -22,7 +22,7 @@
         <tr>
             <th>Groups</th>
             <th>People</th>
-            {% if user.is_staff %}
+            {% if user.is_superuser %}
                 <th>Excel</th>
             {% endif %}
         </tr>
@@ -32,7 +32,7 @@
         <tr>
             <td><h1><a href="{% url 'group_attendance' info.group.id %}">{{ info.group }} </a></h1></td>
             <td><h1>{{ info.count_people }}</h1></td>
-            {% if user.is_staff %}
+            {% if user.is_superuser %}
                 <td><h1><a href="{% url 'export_attendance_to_excel' info.group.id %}">Excel</a></h1></td>
             {% endif %}
         </tr>

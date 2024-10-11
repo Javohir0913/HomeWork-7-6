@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, UpdateView
 import pandas as pd
 from django.http import HttpResponse
 from datetime import timedelta
@@ -14,25 +14,27 @@ from django.utils import timezone
 import pytz
 from fpdf import FPDF
 
-from .models import Student, Attendance, Group, Honadon
+from .forms import GroupViewForm
+from .models import Student, Attendance, Group, Honadon, GroupView
 
 
 # Create your views here.
 class GroupList(LoginRequiredMixin, ListView):
-    model = Group
+    model = GroupView
     template_name = 'group/my_group.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.user.is_staff:
-            groups = Group.objects.all()
-        else:
-            groups = Group.objects.filter(group_author=self.request.user.id)
+        groups = GroupView.objects.filter(user=self.request.user.id)
 
-        # Create a dictionary to store student counts
+        # Create a list to store group information and student counts
         all_info = []
-        for group in groups:
-            all_info.append({'group': group, 'count_people': Student.objects.filter(stundet_group=group).count()})
+
+        for group_view in groups:
+            for group in group_view.groups_list.all():
+                count_people = Student.objects.filter(stundet_group=group).count()  # O'zgarish
+                all_info.append({'group': group, 'count_people': count_people})
+
         context['all_info'] = all_info
         return context
 
@@ -167,7 +169,6 @@ def load_students_from_excel(file_path):
     for index, row in df.iterrows():
         # Guruhni topish yoki yaratish (D ustun - 3-indeks)
         group, created = Group.objects.get_or_create(group_name=row[3])
-        print(group)
         # Talabani yaratish yoki saqlash (A, B, C ustunlar - 0, 1, 2 indekslar)
         student, created = Student.objects.get_or_create(
             student_last_name=row[0],  # A ustun - Familiya
@@ -271,3 +272,59 @@ class PDFList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Honadon.objects.all().order_by('-id')  # student_name ga ko'ra kamayish tartibi
+
+
+class GroupViewCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = GroupView
+    form_class = GroupViewForm
+    template_name = 'group/groupview_form.html'
+    success_url = reverse_lazy('groupview_list')
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Shablonga yuborilayotgan barcha ma'lumotlarni konsolga chiqarish
+        print(context)  # Konsolga ma'lumotlarni chiqaradi
+        return context
+
+
+class GroupViewUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = GroupView
+    form_class = GroupViewForm
+    template_name = 'group/groupview_form.html'  # o'z shabloningizni qo'shing
+    success_url = reverse_lazy('groupview_list')  # muvaffaqiyatli yangilashdan so'ng qaytadigan URL
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupViewList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = GroupView
+    template_name = 'group/grouplist.html'
+    context_object_name = 'group_views'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        # Barcha GroupView obyektlarini qaytarish
+        return GroupView.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Foydalanuvchilar va ularning guruhlarini olish
+        user_group_info = []
+        for group_view in self.get_queryset():
+            user_group_info.append({
+                'id': group_view.id,
+                'user': group_view.user,
+                'groups': group_view.groups_list.all()  # Har bir foydalanuvchiga tegishli guruhlar
+            })
+
+        context['user_group_info'] = user_group_info
+        return context
+
+

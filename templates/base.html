@@ -41,9 +41,12 @@
 {#            <li><a class="dropdown-item" href="#">A third link</a></li>#}
           </ul>
         </li>
-          {% if user.is_staff %}
+          {% if user.is_superuser %}
           <a style="padding-top: 10px" href="{% url 'honadon-list' %}"><h4>Honadonlar ro'yhati</h4></a>
-          {% endif %} 
+          {% endif %}
+            {% if user.is_staff %}
+                <a style="padding-top: 10px; margin-left: 40px" href="{% url 'groupview_list' %}"><h4>Userlar</h4></a>
+            {% endif %}
       </ul>
         {% if user.is_authenticated %}
 
