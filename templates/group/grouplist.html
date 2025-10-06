@@ -1,31 +1,68 @@
 {% extends 'base.html' %}
-{% block title %}
-    Honadonlar ro'yxati
-{% endblock %}
+
+{% block title %}Userlar{% endblock %}
+
 {% block content %}
-	<h1>
-        Users
-    <a style="float: right" href="{% url 'groupview_create' %}">Bog'lash</a>
-    </h1>
-    <table class="table table-dark table-hover">
-        <thead>
-            <tr>
-                <th>Ismi</th>
-                <th>Groups</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for info in user_group_info %}
-                 <tr>
-                    <td><a href="{% url 'groupview_update' info.id %}">{{ info.user.username }}</a></td>
-                        {% for group in info.groups %}
-                            <td>{{ group.group_name }}</td>
-                        {% empty %}
-                            <td>No groups found.</td>
-                        {% endfor %}
-                </tr>
-            {% empty %}
-                <li>No users found.</li>
-            {% endfor %}
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
+    <h1 class="h3 mb-0">Userlar</h1>
+    <div class="d-flex gap-2 w-100 w-md-auto">
+      <input id="searchUsers" type="search" class="form-control" placeholder="Qidirish: foydalanuvchi yoki guruh..." aria-label="Qidirish" />
+      <a href="{% url 'groupview_create' %}" class="btn btn-primary"><i class="bi bi-link-45deg me-1"></i>Bog'lash</a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" id="usersTable">
+      <thead class="table-secondary">
+        <tr>
+          <th scope="col">Ismi</th>
+          <th scope="col">Guruhlar</th>
+        </tr>
+      </thead>
+      <tbody id="usersTbody">
+        {% for info in user_group_info %}
+          <tr>
+            <td>
+              <a class="text-decoration-none" href="{% url 'groupview_update' info.id %}">
+                <i class="bi bi-person me-1"></i>{{ info.user.username }}
+              </a>
+            </td>
+            <td>
+              {% if info.groups %}
+                {% for group in info.groups %}
+                  <span class="badge rounded-pill text-bg-primary me-1 mb-1">{{ group.group_name }}</span>
+                {% endfor %}
+              {% else %}
+                <span class="text-secondary">Guruh topilmadi</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2" class="text-center text-secondary py-4">Userlar topilmadi.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function(){
+    const inp = document.getElementById('searchUsers');
+    const table = document.getElementById('usersTable');
+    if(!inp || !table) return;
+
+    function text(el){ return (el.textContent || el.innerText || '').toLowerCase(); }
+
+    inp.addEventListener('input', function(){
+      const q = this.value.trim().toLowerCase();
+      const rows = Array.from(table.tBodies[0].rows);
+      rows.forEach(tr => {
+        tr.style.display = text(tr).includes(q) ? '' : 'none';
+      });
+    });
+  })();
+</script>
 {% endblock %}

@@ -1,4 +1,5 @@
 import os
+import zipfile
 from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,6 +14,11 @@ from datetime import timedelta
 from django.utils import timezone
 import pytz
 from fpdf import FPDF
+from docx import Document
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.shared import Pt, Inches
+from .helper import data, data_2
+from django.conf import settings
 
 from .forms import GroupViewForm
 from .models import Student, Attendance, Group, Honadon, GroupView
@@ -180,6 +186,269 @@ def load_students_from_excel(file_path):
         print(f"Yaratildi: {student}")
 
     return HttpResponse("Ma'lumotlar yuklandi!")
+
+
+def excel_to_word(excel_file, output_dir):
+    zxc = Path(settings.MEDIA_ROOT)
+    output_dir.mkdir(exist_ok=True)  # Papkani yaratish (agar mavjud bo'lmasa)
+
+    df = pd.read_excel(excel_file)
+    word_files = []  # Yaratilgan Word fayllarni saqlash uchun ro'yxat
+
+    for index, row in df.iterrows():
+        if pd.notna(row[4]) and str(row[4]).strip():
+            doc = Document()
+
+            # Sarlavhani qo'shish va formatlash
+            title = "Toshkent amaliy fanlar universiteti talabasining ijtimoiy-psixologik pasporti"
+            paragraph = doc.add_paragraph()
+            run = paragraph.add_run(title)
+            run.bold = True
+            run.italic = True
+            run.font.name = 'Times New Roman'  # Shriftni Times New Roman ga o'rnatish
+            run.font.size = Pt(18)
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER  # O'rtaga joylashtirish
+
+            # Yangi qator qo'shish uchun bo'sh paragraph yaratish
+            doc.add_paragraph()
+
+            # "1. Talabaning F.I.Sh." matnini qo'shish
+            talaba_paragraph = doc.add_paragraph()
+            talaba_run = talaba_paragraph.add_run(f"1. Talabaning F.I.Sh.  ")
+            talaba_run.font.name = 'Times New Roman'
+            talaba_run.font.size = Pt(14)
+            talaba_run.bold = True
+
+            # Talaba ismini qo'shish, underline bilan formatlash
+            talaba_name_run = talaba_paragraph.add_run(f"{row[4]}")
+            talaba_name_run.font.name = 'Times New Roman'
+            talaba_name_run.font.size = Pt(14)
+            talaba_name_run.underline = True
+
+            # Fakulteti, guruhi, kursi
+            talaba_group = doc.add_paragraph()
+            talaba_group_run = talaba_group.add_run("2. Fakulteti, Guruhi, Kursi:  ")
+            talaba_group_run.font.name = 'Times New Roman'
+            talaba_group_run.font.size = Pt(14)
+            talaba_group_run.bold = True
+
+            talaba_group_add = talaba_group.add_run(f"{row[125]}, {row[126]} {row[3]}")
+            talaba_group_add.font.name = 'Times New Roman'
+            talaba_group_add.font.size = Pt(14)
+            talaba_group_add.underline = True
+
+            talba_millat = doc.add_paragraph()
+            talba_millat_run = talba_millat.add_run("3. Millati:  ")
+            talba_millat_run.font.name = 'Times New Roman'
+            talba_millat_run.font.size = Pt(14)
+            talba_millat_run.font.bold = True
+
+            talba_millat_add = talba_millat.add_run(f"{row[5]}")
+            talba_millat_add.font.name = 'Times New Roman'
+            talba_millat_add.font.size = Pt(14)
+            talba_millat_add.underline = True
+
+            talaba_tg_kun = talba_millat.add_run(" 4. Tug‘ilgan kuni: ")
+            talaba_tg_kun.font.name = 'Times New Roman'
+            talaba_tg_kun.font.size = Pt(14)
+            talaba_tg_kun.font.bold = True
+
+            talaba_tg_kun_add = talba_millat.add_run(f"{row[6]}")
+            talaba_tg_kun_add.font.name = 'Times New Roman'
+            talaba_tg_kun_add.font.size = Pt(14)
+            talaba_tg_kun_add.underline = True
+
+            talaba_manzil = doc.add_paragraph()
+            talaba_manzil_run = talaba_manzil.add_run("5. Doimiy yashash manzili: ")
+            talaba_manzil_run.font.name = 'Times New Roman'
+            talaba_manzil_run.font.size = Pt(14)
+            talaba_manzil_run.font.bold = True
+
+            talaba_manzil_add = talaba_manzil.add_run(f"{row[127]}")
+            talaba_manzil_add.font.name = 'Times New Roman'
+            talaba_manzil_add.font.size = Pt(14)
+            talaba_manzil_add.underline = True
+
+            talaba_o_a = doc.add_paragraph()
+            talaba_o_a_run = talaba_o_a.add_run("6. Oilaviy ahvoli (oila a’zolari haqida ma’lumot): ")
+            talaba_o_a_run.font.name = 'Times New Roman'
+            talaba_o_a_run.font.size = Pt(14)
+            talaba_o_a_run.font.bold = True
+
+            talaba_o_a_run_add = talaba_o_a.add_run(f"{row[7]}")
+            talaba_o_a_run_add.font.name = 'Times New Roman'
+            talaba_o_a_run_add.font.size = Pt(14)
+            talaba_o_a_run_add.underline = True
+
+            talaba_salomatligi = doc.add_paragraph()
+            talaba_salomatligi_run = talaba_salomatligi.add_run("7. Salomatligi to‘g‘risida ma’lumotlar: ")
+            talaba_salomatligi_run.font.name = 'Times New Roman'
+            talaba_salomatligi_run.font.size = Pt(14)
+            talaba_salomatligi_run.font.bold = True
+
+            talaba_salomatligi_add = talaba_salomatligi.add_run(f"{row[8]}")
+            talaba_salomatligi_add.font.name = 'Times New Roman'
+            talaba_salomatligi_add.font.size = Pt(14)
+            talaba_salomatligi_add.underline = True
+
+            talaba_figura_tanla = doc.add_paragraph()
+            talaba_figura_tanla_run = talaba_figura_tanla.add_run(
+                "8. Yoqtirgan figuralarning ketma-ketligini tanlang (1 dan 5 gacha raqamlab chiqing)")
+            talaba_figura_tanla_run.font.name = 'Times New Roman'
+            talaba_figura_tanla_run.font.size = Pt(14)
+            talaba_figura_tanla_run.font.bold = True
+            doc.add_picture(f'{zxc}/image_excel_to_wrod/{row[9][-1]}-figura.png', width=Inches(6))
+
+            talaba_qadrli = doc.add_paragraph()
+            talaba_qadrli_run = talaba_qadrli.add_run(
+                '9. “Siz uchun hayotda nima qadrli?”, degan savollariga o‘z munosabatingizni bildiring.')
+            talaba_qadrli_run.font.name = 'Times New Roman'
+            talaba_qadrli_run.font.size = Pt(13)
+            talaba_qadrli_run.font.bold = True
+
+            talaba_qadrli_add = doc.add_paragraph()
+            talaba_qadrli_add_run = talaba_qadrli_add.add_run(f"{row[10]}")
+            talaba_qadrli_add_run.font.name = 'Times New Roman'
+            talaba_qadrli_add_run.font.size = Pt(14)
+            talaba_qadrli_add_run.underline = True
+
+            talaba_fikri = doc.add_paragraph()
+            talaba_fikri_run = talaba_fikri.add_run('Shaxsiy fikringiz: ')
+            talaba_fikri_run.font.name = 'Times New Roman'
+            talaba_fikri_run.font.size = Pt(14)
+            talaba_fikri_run.font.bold = True
+
+            talaba_fikri_add = talaba_fikri.add_run(f"{row[11]}")
+            talaba_fikri_add.font.name = 'Times New Roman'
+            talaba_fikri_add.font.size = Pt(14)
+            talaba_fikri_add.underline = True
+
+            talaba_hayot_mano = doc.add_paragraph()
+            talaba_hayot_mano_run = talaba_hayot_mano.add_run(
+                'Hayotning ma’nosi deb.............tushunaman savoliga javoblarning birini tanlang.')
+            talaba_hayot_mano_run.font.name = 'Times New Roman'
+            talaba_hayot_mano_run.font.size = Pt(14)
+            talaba_hayot_mano_run.font.bold = True
+
+            talaba_hayot_mano_add = doc.add_paragraph()
+            talaba_hayot_mano_add_run = talaba_hayot_mano_add.add_run(f'{row[12]}')
+            talaba_hayot_mano_add_run.font.name = 'Times New Roman'
+            talaba_hayot_mano_add_run.font.size = Pt(14)
+            talaba_hayot_mano_add_run.underline = True
+
+            talaba_hayot_fikri = doc.add_paragraph()
+            talaba_hayot_fikri_run = talaba_hayot_fikri.add_run('Shaxsiy fikringiz: ')
+            talaba_hayot_fikri_run.font.name = 'Times New Roman'
+            talaba_hayot_fikri_run.font.size = Pt(14)
+            talaba_hayot_fikri_run.font.bold = True
+
+            talaba_hayot_fikri_add = talaba_hayot_fikri.add_run(f"{row[13]}")
+            talaba_hayot_fikri_add.font.name = 'Times New Roman'
+            talaba_hayot_fikri_add.font.size = Pt(14)
+            talaba_hayot_fikri_add.underline = True
+
+            talaba_tablitsa = doc.add_paragraph()
+            talaba_tablitsa_run = talaba_tablitsa.add_run(
+                'BERILGAN FIKRGA QO‘SHILSANGIZ, SIZGA TAALLUQLI BO‘LGANLARIGA “1” BALL, QO‘SHILMASANGIZ “0” BALL  QO‘YING.')
+            talaba_tablitsa.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            talaba_tablitsa_run.font.bold = True
+            talaba_tablitsa_run.font.name = 'Times New Roman'
+            talaba_tablitsa_run.font.size = Pt(11)
+
+            table = doc.add_table(rows=len(data), cols=4)
+            # Jadvalga matn qo'shish
+            for i, row_data in enumerate(data):
+                row_table = table.rows[i]
+
+                for j, text in enumerate(row_data):
+                    cell = row_table.cells[j]
+                    paragraph = cell.paragraphs[0]
+                    if text:
+                        if str(text)[0].isdigit():
+                            run = paragraph.add_run(text)
+                            run.font.name = 'Times New Roman'
+                            run.font.size = Pt(11)
+                            run.font.bold = True
+                        else:
+                            run = paragraph.add_run(text)
+                            run.font.name = 'Times New Roman'
+                            run.font.size = Pt(11)
+                        in_else = text
+                    else:
+                        if in_else in df.columns:
+                            column_index = df.columns.get_loc(in_else)
+                            if str(row[column_index]):
+                                run = paragraph.add_run(str(row[column_index])[0])
+                                run.font.name = 'Times New Roman'
+                                run.font.size = Pt(11)
+            doc.add_paragraph()
+            table_2_text = doc.add_paragraph()
+            table_2_text_run = table_2_text.add_run(
+                '  Sizning e’tiboringizga bir qator oddiy savollar havola etilgan. Siz ularga “ha”, “yo‘q”, “ba’zida” deb javob berishingiz mumkin. Savollarga tez va ko‘p o‘ylanmay javob berishingiz so‘raladi.')
+            table_2_text_run.font.name = 'Times New Roman'
+            table_2_text_run.font.size = Pt(11)
+            table_2_text.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+            table_2 = doc.add_table(rows=len(data_2), cols=2)
+            for i, row_data in enumerate(data_2):
+                row_table = table_2.rows[i]  # table_2 ni ishlatishimiz kerak
+                for j, text in enumerate(row_data):
+                    cell = row_table.cells[j]
+                    paragraph = cell.paragraphs[0]
+                    if text:
+                        run = paragraph.add_run(text)
+                        run.font.name = 'Times New Roman'
+                        run.font.size = Pt(11)
+                        in_else = text
+                    else:
+                        if in_else in df.columns:
+                            column_index = df.columns.get_loc(in_else)
+                            if str(row[column_index]):
+                                run = paragraph.add_run(str(row[column_index]))
+                                run.font.name = 'Times New Roman'
+                                run.font.size = Pt(11)
+
+            # Word hujjatini saqlash
+            word_file_path = output_dir / f"{row[4]}.docx"
+            doc.save(word_file_path)
+            word_files.append(word_file_path)  # Fayl yo'lini ro'yxatga qo'shish
+
+    return word_files  # Yaratilgan Word fayllarni qaytarish
+
+
+def zip_directory(files, zip_name):
+    zip_path = f"{zip_name}.zip"
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file_path in files:
+            zipf.write(file_path, file_path.name)  # Faylni faqat nomi bilan qo'shamiz
+    return zip_path
+
+
+@login_required
+def student_excel_word(request):
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        output_dir = Path(settings.MEDIA_ROOT) / "word_to_excel"
+
+        # Excel fayldan Word fayllarni yaratish va ularni ro'yxatga olish
+        word_files = excel_to_word(excel_file, output_dir)
+
+        # Zip faylni yaratish (faqat yaratgan Word fayllar bilan)
+        zip_file_path = zip_directory(word_files, output_dir / "word_documents")
+
+        # Zip faylni foydalanuvchiga qaytarish
+        with open(zip_file_path, 'rb') as zip_file:
+            response = HttpResponse(zip_file.read(), content_type="application/zip")
+            response['Content-Disposition'] = 'attachment; filename=word_documents.zip'
+
+        # Zip fayl va Word fayllarni o'chirish
+        for file_path in word_files:
+            os.remove(file_path)
+        os.remove(zip_file_path)  # Zip faylni o'chirish
+
+        return response
+
+    return render(request, 'student_excel_word.html')
 
 
 @login_required

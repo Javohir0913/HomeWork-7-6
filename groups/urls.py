@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import GroupList, GroupAttendanceView, export_attendance_to_excel, upload_students, HonadonCreateView, \
-    PDFDownloadView, PDFList, GroupViewCreate, GroupViewUpdate, GroupViewList
+    PDFDownloadView, PDFList, GroupViewCreate, GroupViewUpdate, GroupViewList, student_excel_word
 
 urlpatterns = [
     path('', GroupList.as_view(), name='group_list'),
@@ -14,4 +14,5 @@ urlpatterns = [
     path('groupview/create/', GroupViewCreate.as_view(), name='groupview_create'),
     path('groupview/update/<int:pk>/', GroupViewUpdate.as_view(), name='groupview_update'),
     path('groupview/list/', GroupViewList.as_view(), name='groupview_list'),
+    path('student_excel_word/', student_excel_word, name='student_excel_word'),
 ]

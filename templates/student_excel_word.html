@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Exceldan Wordga o'tkazish
+{% endblock %}
+{% block content %}
+    <h1>Excel faylini yuklab, Word hujjatlari yarating</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Excel faylni yuklang:</label>
+        <input type="file" name="excel_file" required>
+        <button class="btn btn-success m-3" type="submit">Yaratish</button>
+    </form>
+{% endblock %}
